@@ -17,6 +17,7 @@ import org.apache.hadoop.io.IOUtils;
 import org.apache.log4j.Logger;
 
 public class HadoopTest {
+	
 	Logger logger = Logger.getLogger(HadoopTest.class);
 	private Set<String> set = new HashSet<String>();
 	public static void main(String[] args) throws Exception {
