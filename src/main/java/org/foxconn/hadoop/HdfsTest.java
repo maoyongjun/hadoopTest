@@ -16,13 +16,13 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.log4j.Logger;
 
-public class HadoopTest {
+public class HdfsTest {
 	
-	Logger logger = Logger.getLogger(HadoopTest.class);
+	Logger logger = Logger.getLogger(HdfsTest.class);
 	private Set<String> set = new HashSet<String>();
 	public static void main(String[] args) throws Exception {
 		System.setProperty("HADOOP_USER_NAME", "root");
-		HadoopTest test = new HadoopTest();
+		HdfsTest test = new HdfsTest();
 //		test.test1();
 //		test.test2();
 //		test.test3();
@@ -37,7 +37,7 @@ public class HadoopTest {
 	            // 不设置该代码会出现错误：java.io.IOException: No FileSystem for scheme: hdfs
 	            conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
 
-	            String filePath = "hdfs://192.168.146.158:9000/test/test.txt";
+	            String filePath = "hdfs://192.168.146.158:9000/wordcount/srcdata/";
 	            Path path = new Path(filePath);
 
 	            // 这里需要设置URI，否则出现错误：java.lang.IllegalArgumentException: Wrong FS: hdfs://127.0.0.1:9000/test/test.txt, expected: file:///
