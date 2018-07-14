@@ -1,9 +1,11 @@
 package org.foxconn.hadoop;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -12,228 +14,189 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
+import org.apache.log4j.Logger;
 
 public class HdfsTest {
-
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		try {
-			System.out.println(System.getenv("HADOOP_HOME"));
-			System.setProperty("HADOOP_USER_NAME", "hadoop");
-//			downFromHdfs() ;
-//			uploadFileToHdfs() ;
-//			mkdirToHdfs() ;
-//			createFile() ;
-//			renameFileOrDir() ;
-			listDir();
-//			delFile() ;
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	
+	Logger logger = Logger.getLogger(HdfsTest.class);
+	private Set<String> set = new HashSet<String>();
+	public static void main(String[] args) throws Exception {
+		System.setProperty("HADOOP_USER_NAME", "root");
+		HdfsTest test = new HdfsTest();
+//		test.test1();
+//		test.test2();
+//		test.test3();
+//		test.test4();
+		test.test5();
 	}
+	
+	public void test5(){
+		  try {
+	            Configuration conf = new Configuration();
 
-	// 涓嬭浇鏂囦欢
-	public static void downFromHdfs() throws Exception {
-		String path = "hdfs://192.168.198.128:9000";
-		URI uri = new URI(path);
-		FileSystem fs = FileSystem.get(uri, new Configuration());
-		// Hadoop鏂囦欢绯荤粺涓�氳繃Hadoop Path瀵硅薄鏉ヤ唬琛ㄤ竴涓枃浠�
-		Path src = new Path("/tfiles/a.txt");
-		FSDataInputStream in = fs.open(src);
+	            // 不设置该代码会出现错误：java.io.IOException: No FileSystem for scheme: hdfs
+	            conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
 
-		File targetFile = new File("d://aa.txt");
-		FileOutputStream out = new FileOutputStream(targetFile);
-		// IOUtils鏄疕adoop鑷繁鎻愪緵鐨勫伐鍏风被锛屽湪缂栫▼鐨勮繃绋嬩腑鐢ㄧ殑闈炲父鏂逛究
-		// 鏈�鍚庨偅涓弬鏁板氨鏄槸鍚︿娇鐢ㄥ畬鍏抽棴鐨勬剰鎬�
-		IOUtils.copyBytes(in, out, 4096, true);
-		System.out.println("=========鏂囦欢涓嬭浇鎴愬姛=========");
+	            String filePath = "hdfs://192.168.146.158:9000/wordcount/srcdata/";
+	            Path path = new Path(filePath);
+
+	            // 这里需要设置URI，否则出现错误：java.lang.IllegalArgumentException: Wrong FS: hdfs://127.0.0.1:9000/test/test.txt, expected: file:///
+	            FileSystem fs = FileSystem.get(new URI(filePath), conf);
+
+	            System.out.println( "READING ============================" );
+	            FSDataInputStream is = fs.open(path);
+	            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+	            // 示例仅读取一行
+	            String content = br.readLine();
+	            System.out.println(content);
+	            br.close();
+
+
+	            System.out.println("WRITING ============================");
+	            byte[] buff = "this is helloworld from java api!\n".getBytes();
+	            FSDataOutputStream os = fs.create(path);
+	            os.write(buff, 0, buff.length);
+	            os.close();
+	            fs.close();
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
+		
 	}
-
-	// 2锛氫笂浼犳枃浠�
-	public static void uploadFileToHdfs() throws Exception {
-		// 閽堝杩欑鏉冮檺闂锛屾湁闆嗕腑瑙ｅ喅鏂规锛岃繖鏄竴绉嶏紝杩樺彲浠ラ厤缃甴dfs鐨剎ml鏂囦欢鏉ヨВ鍐�
-		// System.setProperty("HADOOP_USER_NAME","hadoop") ;
-		// FileSystem鏄竴涓娊璞＄被锛屾垜浠彲浠ラ�氳繃鏌ョ湅婧愮爜鏉ヤ簡瑙�
-		String path = "hdfs://192.168.198.128:9000";
-		URI uri = new URI(path);// 鍒涘缓URI瀵硅薄
-		FileSystem fs = FileSystem.get(uri, new Configuration());// 鑾峰彇鏂囦欢绯荤粺
-		// 鍒涘缓婧愬湴鍧�
-		Path src = new Path("d://aa.txt");
-		// 鍒涘缓鐩爣鍦板潃
-		Path dst = new Path("/");
-		// 璋冪敤鏂囦欢绯荤粺鐨勫鍒跺嚱鏁帮紝鍓嶉潰鐨勫弬鏁版槸鎸囨槸鍚﹀垹闄ゆ簮鏂囦欢锛宼rue涓哄垹闄わ紝鍚﹀垯涓嶅垹闄�
-		fs.copyFromLocalFile(false, src, dst);
-		// 鏈�鍚庡叧闂枃浠剁郴缁�
-		System.out.println("=========鏂囦欢涓婁紶鎴愬姛==========");
-		fs.close();// 褰撶劧杩欓噷鎴戜滑鍦ㄦ寮忎功鍐欎唬鐮佺殑鏃跺�欓渶瑕佽繘琛屼慨鏀癸紝鍦╢inally鍧椾腑鍏抽棴
+	
+	public  void test1() throws Exception {
+		// 1）构建Configuration对象，读取并解析相关配置文件
+		Configuration conf = new Configuration();
+		// 2）设置相关属性
+//		conf.set("fs.defaultFS", "hdfs://192.168.146.158:9000");
+//		conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
+//		 conf.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER");
+		// 3）获取特定文件系统实例fs（以HDFS文件系统实例）
+		FileSystem fs = FileSystem.get(new URI("hdfs://192.168.146.158:9000"), conf, "hdfs");
+		// 4）通过文件系统实例fs进行文件操作(以删除文件实例)
+		fs.delete(new Path("/user/liuhl/someWords.txt"));
 	}
-
-	// 3锛氬垱寤烘枃浠跺す
-	public static void mkdirToHdfs() {
-
-		String path = "hdfs://192.168.198.128:9000";
-		URI uri = null;
-		FileSystem fs = null;
-		try {
-			// 鍒涘缓URI瀵硅薄
-			uri = new URI(path);
-			fs = FileSystem.get(uri, new Configuration());// 鑾峰彇鏂囦欢绯荤粺
-			Path dirPath = new Path("/mktest");
-			fs.mkdirs(dirPath);
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				fs.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		System.out.println("==========鍒涘缓鐩綍鎴愬姛=========");
+	
+	public void test2() throws Exception {
+		FileSystem fileSystem=getHadoopFileSystem();
+		FSDataInputStream in=null;
+		in=fileSystem.open(new Path("file:///a.txt"));
+//		FileStatus fileStatus=fileSystem.getFileStatus(new Path(uri));
+//		byte[] buffer=new byte[1024];
+//		in.read(4096, buffer, 0, 1024);
+		IOUtils.copyBytes(in, System.out, 4096, false);
+		IOUtils.closeStream(in);
 	}
-
-	// 4锛氬垱寤烘枃浠�
-	public static void createFile() {
-
-		String path = "hdfs://192.168.198.128:9000";
-		// 鍒涘缓URI瀵硅薄
-		URI uri = null;
-		FileSystem fs = null;
-		FSDataOutputStream out = null;
-		try {
-			uri = new URI(path);
-			fs = FileSystem.get(uri, new Configuration());// 鑾峰彇鏂囦欢绯荤粺
-			Path dst = new Path("/mktest/aa.txt");// 瑕佸垱寤虹殑鏂囦欢鐨勮矾寰�
-			byte[] content = "鎴戠埍浣犱滑".getBytes();
-			// 鍒涘缓鏂囦欢
-			out = fs.create(dst);
-			// 鍐欐暟鎹�
-			out.write(content);
-			System.out.println("=======鏂囦欢鍒涘缓鎴愬姛========");
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				// 鍏抽棴娴�
-				out.close();
-				fs.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
+	
+	
+	public void test3() throws IOException{
+		FileSystem fileSystem=getHadoopFileSystem();
+		 Path path = new Path("test5");
+		 boolean b = false;
+	     b =fileSystem.mkdirs(path);
+	     System.out.println(b);
+		
 	}
-
-	// 5锛氭枃浠堕噸鍛藉悕
-	public static void renameFileOrDir() {
-
-		String path = "hdfs://192.168.198.128:9000";
-		// 鍒涘缓URI瀵硅薄
-		URI uri = null;
-		FileSystem fs = null;
-
-		// 鏃ф枃浠跺悕绉扮殑path
-//			Path oldName = new Path("/mktest/aa.txt") ;
-//			Path newName = new Path("/mktest/bb") ;		
-		Path oldName = new Path("/mktest");
-		Path newName = new Path("/mktest2");
-		try {
-			uri = new URI(path);
-			fs = FileSystem.get(uri, new Configuration());// 鑾峰彇鏂囦欢绯荤粺
-			fs.rename(oldName, newName);
-			System.out.println("=========閲嶅懡鍚嶆垚鍔�========");
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				fs.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+	public void test4() throws IOException{
+		FileSystem fileSystem=getHadoopFileSystem();
+		 recursiveHdfsPath(fileSystem,new Path("hdfs://192.168.146.158:9000/"));
+		 System.out.println(set);
 	}
-
-	// 閬嶅巻鏂囦欢绯荤粺鐨勬煇涓洰褰�
-	public static void listDir() {
-
-		String path = "hdfs://192.168.198.128:9000";
-		// 鍒涘缓URI瀵硅薄
-		URI uri = null;
-		FileSystem fs = null;
-		try {
-			uri = new URI(path);
-			Configuration cfg = new Configuration();
-			cfg.set("fs.defaultFS", "hdfs://192.168.198.128:9000");
-			cfg.set("fs.hdfs.impl","org.apache.hadoop.hdfs.DistributedFileSystem");
-			cfg.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER");
-			System.out.println("cfg:"+cfg);
-			fs = FileSystem.get(uri, cfg);
-			System.out.println("fs:"+fs);
-			// 杈撳叆瑕侀亶鍘嗙殑鐩綍璺緞
-			Path dst = new Path("/");
-			// 璋冪敤listStatus()鏂规硶鑾峰彇涓�涓枃浠舵暟缁�
-			// FileStatus瀵硅薄灏佽浜嗘枃浠剁殑鍜岀洰褰曠殑鍏冩暟鎹紝鍖呮嫭鏂囦欢闀垮害銆佸潡澶у皬銆佹潈闄愮瓑淇℃伅
-			FileStatus[] liststatus = fs.listStatus(dst);
-			for (FileStatus ft : liststatus) {
-				// 鍒ゆ柇鏄惁鏄洰褰�
-				String isDir = ft.isDirectory() ? "鏂囦欢澶�" : "鏂囦欢";
-				// 鑾峰彇鏂囦欢鐨勬潈闄�
-				String permission = ft.getPermission().toString();
-				// 鑾峰彇澶囦唤鍧�
-				short replication = ft.getReplication();
-				// 鑾峰彇鏁扮粍鐨勯暱搴�
-				long len = ft.getLen();
-				// 鑾峰彇鏂囦欢鐨勮矾寰�
-				String filePath = ft.getPath().toString();
-				System.out.println("鏂囦欢淇℃伅锛�");
-				System.out.println("鏄惁鏄洰褰曪紵 " + isDir);
-				System.out.println("鏂囦欢鏉冮檺 " + permission);
-				System.out.println("澶囦唤鍧� " + replication);
-				System.out.println("鏂囦欢闀垮害  " + len);
-				System.out.println("鏂囦欢璺姴  " + filePath);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				fs.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
+	public Set<String> recursiveHdfsPath(FileSystem hdfs,Path listPath){
+		 FileStatus[] files = null;
+         try {
+             files = hdfs.listStatus(listPath);
+             System.out.println(files);
+             // 实际上并不是每个文件夹都会有文件的。
+             if(files.length == 0){
+                 // 如果不使用toUri()，获取的路径带URL。
+                 set.add(listPath.toUri().getPath());
+             }else {
+                 // 判断是否为文件
+                 for (FileStatus f : files) {
+                     if (files.length == 0 || f.isFile()) {
+                         set.add(f.getPath().toUri().getPath());
+                     } else {
+                    	 if(set.size()>40){
+                    		 return set;
+                    	 }
+                         // 是文件夹，且非空，就继续遍历
+                         recursiveHdfsPath(hdfs, f.getPath());
+                     }
+                 }
+             }
+         } catch (IOException e) {
+             e.printStackTrace();
+             logger.error(e);
+         }
+         return set;
+		
 	}
-
-	// 鍒犻櫎鏂囦欢
-	public static void delFile() {
-
-		String path = "hdfs://192.168.198.128:9000";
-		// 鍒涘缓URI瀵硅薄
-		URI uri = null;
-		FileSystem fs = null;
-		try {
-			uri = new URI(path);
-			fs = FileSystem.get(uri, new Configuration());
-//				Path dst = new Path("/job.txt") ;
-			Path dst = new Path("/mktest2");
-
-			// 姘镐箙鎬у垹闄ゆ寚瀹氱殑鏂囦欢鎴栫洰褰曪紝濡傛灉鐩爣鏄竴涓┖鐩綍鎴栬�呮枃浠讹紝閭ｄ箞recursive鐨勫�煎氨浼氳蹇界暐銆�
-			// 鍙湁recursive锛漷rue鏃讹紝涓�涓潪绌虹洰褰曞強鍏跺唴瀹规墠浼氳鍒犻櫎
-			boolean flag = fs.delete(dst, true);
-			if (flag) {
-				System.out.println("==========鍒犻櫎鎴愬姛=========");
-			} else {
-				System.out.println("==========鍒犻櫎澶辫触=========");
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				fs.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-	}
+	
+	 public FileSystem getHadoopFileSystem() throws IOException {
+         
+         
+         FileSystem fs = null;
+         Configuration conf = null;
+ 
+         // 方法一，本地有配置文件，直接获取配置文件（core-site.xml，hdfs-site.xml）
+         // 根据配置文件创建HDFS对象
+         // 此时必须指定hdsf的访问路径。
+//         conf = new Configuration();
+//         // 文件系统为必须设置的内容。其他配置参数可以自行设置，且优先级最高
+//         conf.set("fs.defaultFS", "hdfs://192.168.146.158:9000");
+// 
+//         try {
+//             // 根据配置文件创建HDFS对象
+//             fs = FileSystem.get(conf);
+//         } catch (IOException e) {
+//             e.printStackTrace();
+//             logger.error("",e);
+//         }
+ 
+         // 方法二：本地没有hadoop系统，但是可以远程访问。根据给定的URI和用户名，访问hdfs的配置参数
+         // 此时的conf不需任何设置，只需读取远程的配置文件即可。
+//         conf = new Configuration();
+//         // Hadoop的用户名
+//         String hdfsUserName = "root";
+// 
+//         URI hdfsUri = null;
+//         try {
+//             // HDFS的访问路径
+//             hdfsUri = new URI("hdfs://192.168.146.158:9000");
+//         } catch (URISyntaxException e) {
+//             e.printStackTrace();
+//             logger.error(e);
+//         }
+// 
+//         try {
+//             // 根据远程的NN节点，获取配置信息，创建HDFS对象
+//             fs = FileSystem.get(hdfsUri,conf,hdfsUserName);
+//         } catch (IOException e) {
+//             e.printStackTrace();
+//             logger.error(e);
+//         } catch (InterruptedException e) {
+//             e.printStackTrace();
+//             logger.error(e);
+//         }
+ 
+         // 方法三，反正我们没有搞懂。
+         //下面三行如果不加则自动读取项目路径下的配置文件
+//         conf = new Configuration();
+//         conf.addResource(new Path("c://conf/core-site.xml"));
+//         conf.addResource(new Path("c://conf/hdfs-site.xml"));
+//         conf.addResource(new Path("c://conf/mapred-site.xml"));
+//
+//         fs = FileSystem.get(conf);
+ 
+         
+         conf = new Configuration();
+         conf.set("fs.defaultFS", "hdfs://192.168.146.158:9000");
+         conf.set("fs.hdfs.impl","org.apache.hadoop.hdfs.DistributedFileSystem");
+         conf.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER");
+         fs = FileSystem.get(conf);
+         
+         return fs;
+     } 
+	
 }
